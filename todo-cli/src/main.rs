@@ -28,41 +28,69 @@ fn main() {
 
     match action {
       "add" => {
-        let action_to_perform = &get_action_to_perfom(&input);
+        let action_to_perform = get_action_to_perfom(&input);
+
         if let Some(action_to_perform) = action_to_perform {
-          todos.add(action_to_perform);
+          todos.add(&action_to_perform);
           println!("Added succesfully!");
         }
         continue;
       }
       "remove" => {
-        let action_to_perform = get_action_to_perfom(&input);
+        if let None = is_there_action_in_input(&input) {
+          continue;
+        }
 
-        if let Some(action_to_perform) = action_to_perform {
-          let id = action_to_perform.parse::<usize>();
+        let id = input[2].parse::<usize>();
 
-          match id {
-            Ok(id) => match todos.remove(id) {
-              Ok(todo) => {
-                println!("Removed todo: {}", todo.id());
-              }
-              Err(err) => {
-                println!("{err}");
-              }
-            },
-            Err(_) => {
-              println!("Id should be a number");
-              continue;
+        match id {
+          Ok(id) => match todos.remove(id) {
+            Ok(todo) => {
+              println!("Removed todo: {}", todo.text());
             }
+            Err(err) => {
+              println!("{err}");
+            }
+          },
+          Err(_) => {
+            println!("Id should be a number");
+            continue;
           }
         }
 
         continue;
       }
-      "done" => continue,
+      "done" => {
+        if let None = is_there_action_in_input(&input) {
+          continue;
+        }
+
+        let id = input[2].parse::<usize>();
+
+        match id {
+          Ok(id) => match todos.done(id) {
+            Ok(_) => {
+              println!("Todo completed!");
+            }
+            Err(err) => {
+              println!("{err}");
+            }
+          },
+          Err(_) => {
+            println!("Id should be a number");
+            continue;
+          }
+        }
+      }
       "list" => {
-        todos
-          .list()
+        let list_of_todos = todos.list();
+
+        if list_of_todos.len() == 0 {
+          println!("There is no todo's");
+          continue;
+        }
+
+        list_of_todos
           .into_iter()
           .for_each(|todo| println!("{}: {} - {}", todo.id(), todo.text(), todo.status()));
       }
@@ -75,10 +103,17 @@ fn main() {
 }
 
 fn get_action_to_perfom(input: &Vec<&str>) -> Option<String> {
+  match is_there_action_in_input(input) {
+    Some(_) => Some(input[2..].join(" ")),
+    None => None,
+  }
+}
+
+fn is_there_action_in_input(input: &Vec<&str>) -> Option<()> {
   if input.len() < 3 {
     println!("Not enough arguments");
     return None;
   }
 
-  Some(input[2..].join(" "))
+  Some(())
 }
